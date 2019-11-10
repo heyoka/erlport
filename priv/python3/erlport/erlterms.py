@@ -43,6 +43,18 @@ from pickle import loads, dumps
 # from 2.5 to 3.2
 PICKLE_PROTOCOL = 2
 
+
+def immutable(v):
+    if isinstance(v, dict) and not isinstance(v, Map):
+        return Map(v)
+    elif isinstance(v, ImproperList):
+        return v
+    elif isinstance(v, list) and not isinstance(v, List):
+        return List(v)
+    else:
+        return v
+
+
 class IncompleteData(ValueError):
     """Need more data."""
 
@@ -86,6 +98,32 @@ class List(list):
 
     def __repr__(self):
         return "List(%s)" % super(List, self).__repr__()
+
+    def __hash__(self):
+        return hash(tuple(self))
+
+
+class Map(dict):
+    __slots__ = ()
+
+    def __new__(cls, *args, **kwargs):
+        d = {}
+        new = dict.__new__(cls)
+        dict.__init__(d, *args, **kwargs)
+        for k, v in d.items():
+            k = immutable(k)
+            v = immutable(v)
+            dict.__setitem__(new, k, v)
+        return new
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __repr__(self):
+        return "Map(%s)" % super(Map, self).__repr__()
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
 
 
 class ImproperList(list):
@@ -256,6 +294,20 @@ def decode_term(string,
         if len(lst) == 3 and lst[0] == opaque:
             return decode_opaque(lst[2], lst[1]), tail
         return tuple(lst), tail
+    elif tag == 116:
+        # MAP_EXT
+        _decode_term = decode_term
+        if len(string) < 5:
+            raise IncompleteData(string)
+        length, = int4_unpack(string[1:5])
+        tail = string[5:]
+        d = {}
+        while length > 0:
+            k, tail = _decode_term(tail)
+            v, tail = _decode_term(tail)
+            d[k] = v
+            length -= 1
+        return Map(d), tail
     elif tag == 97:
         # SMALL_INTEGER_EXT
         if len(string) < 2:
@@ -411,6 +463,13 @@ def encode_term(term,
         return b"d\0\11undefined"
     elif t is OpaqueObject:
         return term.encode()
+    elif t is Map or t is dict:
+        length = len(term)
+        if length > 4294967295:
+            raise ValueError("invalid Map size: %r" % length)
+        header = char_int4_pack(b't', length)
+        return header + b"".join([
+            encode_term(k) + encode_term(v) for k, v in term.items()])
     elif t is ImproperList:
         length = len(term)
         if length > 4294967295:

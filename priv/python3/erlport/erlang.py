@@ -24,7 +24,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
+import inspect
 from inspect import getargspec
 import sys
 from sys import exc_info
@@ -128,9 +128,10 @@ class MessageHandler(object):
 
     def _check_handler(self, handler):
         # getargspec will raise TypeError if handler is not a function
-        args, varargs, _keywords, defaults = getargspec(handler)
+        (args, varargs, _varkw, defaults, _kwonlyargs, _kwonlydefaults, _annotations) = inspect.getfullargspec(handler)
+        # args, varargs, _keywords, defaults = inspect.getfullargspec(handler)
         largs = len(args)
-        too_much = largs > 1 and largs - len(default) > 1
+        too_much = largs > 1 and largs - len(defaults) > 1
         too_few = largs == 0 and varargs is None
         if too_much or too_few:
             raise ValueError("expected single argument function: %r"

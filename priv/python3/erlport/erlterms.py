@@ -51,6 +51,8 @@ def immutable(v):
         return v
     elif isinstance(v, list) and not isinstance(v, List):
         return List(v)
+    elif isinstance(v, bytes):
+        return v.decode('utf-8')
     else:
         return v
 

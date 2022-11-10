@@ -114,7 +114,14 @@ class Map(dict):
         dict.__init__(d, *args, **kwargs)
         for k, v in d.items():
             k = immutable(k)
-            v = immutable(v)
+            if isinstance(v, list):
+                v1 = list()
+                for i, e in enumerate(v):
+                    v1.append(immutable(e))
+                v = immutable(v1)
+            else:
+                v = immutable(v)
+
             dict.__setitem__(new, k, v)
         return new
 

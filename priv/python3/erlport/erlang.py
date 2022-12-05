@@ -25,7 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import inspect
-from inspect import getargspec
+from inspect import getfullargspec
 import sys
 from sys import exc_info
 from traceback import extract_tb

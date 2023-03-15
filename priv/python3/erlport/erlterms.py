@@ -36,12 +36,10 @@ __author__ = "Dmitry Vasiliev <dima@hlabs.org>"
 from struct import Struct
 from array import array
 from zlib import decompressobj, compress
-from pickle import loads, dumps
+from pickle import loads, dumps, HIGHEST_PROTOCOL as USE_PICKLE_PROTOCOL
 
 
-# It seems protocol version 2 is supported by all Python versions
-# from 2.5 to 3.2
-PICKLE_PROTOCOL = 2
+PICKLE_PROTOCOL = USE_PICKLE_PROTOCOL
 
 
 def immutable(v):
@@ -52,7 +50,10 @@ def immutable(v):
     elif isinstance(v, list) and not isinstance(v, List):
         return List(v)
     elif isinstance(v, bytes):
-        return v.decode('utf-8')
+        try:
+            return v.decode('utf-8')
+        except UnicodeDecodeError:
+            return v
     else:
         return v
 

@@ -33,6 +33,7 @@ See Erlang External Term Format for details:
 
 __author__ = "Dmitry Vasiliev <dima@hlabs.org>"
 
+import math
 from struct import Struct
 from array import array
 from zlib import decompressobj, compress
@@ -468,6 +469,8 @@ def encode_term(term,
             return char_int4_byte_pack(b"o", length, sign) + b
         raise ValueError("invalid integer value with length: %r" % length)
     elif t is float:
+        if term is math.inf:
+            return char_int2_pack(b"d", 15) + b"python_math_inf"
         return char_float_pack(b"F", term)
     elif term is None:
         return b"d\0\11undefined"

@@ -470,7 +470,7 @@ def encode_term(term,
         raise ValueError("invalid integer value with length: %r" % length)
     elif t is float:
         if term is math.inf:
-            return char_int2_pack(b"d", 15) + b"python_math_inf"
+            raise ValueError("invalid float value math.inf")
         return char_float_pack(b"F", term)
     elif term is None:
         return b"d\0\11undefined"

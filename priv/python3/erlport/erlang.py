@@ -236,12 +236,19 @@ class MessageHandler(object):
             t, val, tb = exc_info()
             exc = Atom(bytes("%s.%s" % (t.__module__, t.__name__), "utf-8"))
             exc_tb = extract_tb(tb)
-            exc_tb.reverse()
-            error = Atom(b"python"), exc, str(val), exc_tb
+            try:
+                exc_tb.reverse()
+                exc_string = str(exc_tb[0])
+                exc_string = exc_string.replace('<FrameSummary', '').replace('>', '')
+            except:
+                exc_string = ''
+
+            error = Atom(b"python"), exc, str(val), exc_string
             if mid is not None:
                 result = Atom(b"e"), mid, error
             else:
                 result = Atom(b"e"), error
+
             self.port.write(result)
 
 def setup_api_functions(handler):
